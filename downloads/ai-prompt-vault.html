@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Prompt Vault</title>
+    <style>
+        /* ── Reset & Base ── */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #0d1117;
+            --bg-card: #161b22;
+            --bg-card-hover: #1c2333;
+            --bg-input: #0d1117;
+            --border: #30363d;
+            --text: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #484f58;
+            --accent: #58a6ff;
+            --accent-hover: #79c0ff;
+            --favorite: #f0883e;
+            --success: #3fb950;
+            --danger: #f85149;
+            --shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --transition: 0.2s ease;
+        }
+
+        html {
+            font-size: 16px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        #app {
+            width: 100%;
+            max-width: 1360px;
+        }
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* ── Header ── */
+        .header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px 16px;
+            padding: 16px 0 20px 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-right: auto;
+        }
+        .header-brand span {
+            background: var(--accent);
+            color: #0d1117;
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 0 8px;
+            border-radius: 4px;
+            margin-left: 4px;
+        }
+
+        .header-controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-controls .search-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .header-controls .search-wrap input {
+            padding: 8px 12px 8px 34px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-size: 0.9rem;
+            width: 200px;
+            transition: var(--transition);
+            outline: none;
+        }
+        .header-controls .search-wrap input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+        }
+        .header-controls .search-wrap input::placeholder {
+            color: var(--text-muted);
+        }
+        .header-controls .search-wrap .search-icon {
+            position: absolute;
+            left: 10px;
+            color: var(--text-muted);
+            font-size: 1rem;
+            pointer-events: none;
+        }
+
+        .header-controls select {
+            padding: 8px 30px 8px 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-size: 0.9rem;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 8'%3E%3Cpath fill='%238b949e' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            cursor: pointer;
+            outline: none;
+            transition: var(--transition);
+            min-width: 120px;
+        }
+        .header-controls select:focus {
+            border-color: var(--accent);
+        }
+        .header-controls select option {
+            background: var(--bg-card);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            background: var(--bg-card);
+            color: var(--text);
+            border: 1px solid var(--border);
+            white-space: nowrap;
+        }
+        .btn:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--text-secondary);
+        }
+        .btn-primary {
+            background: var(--accent);
+            color: #0d1117;
+            border-color: var(--accent);
+        }
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            border-color: var(--accent-hover);
+            color: #0d1117;
+        }
+        .btn-success {
+            background: var(--success);
+            color: #0d1117;
+            border-color: var(--success);
+        }
+        .btn-success:hover {
+            opacity: 0.85;
+        }
+        .btn-danger {
+            background: var(--danger);
+            color: #fff;
+            border-color: var(--danger);
+        }
+        .btn-danger:hover {
+            opacity: 0.85;
+        }
+        .btn-outline {
+            background: transparent;
+            border-color: var(--border);
+        }
+        .btn-outline:hover {
+            background: var(--bg-card);
+        }
+        .btn-sm {
+            padding: 4px 10px;
+            font-size: 0.8rem;
+        }
+        .btn-icon {
+            padding: 6px 8px;
+            font-size: 1rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+            border-radius: var(--radius-sm);
+        }
+        .btn-icon:hover {
+            color: var(--text);
+            background: var(--bg-card);
+        }
+
+        /* ── Stats Bar ── */
+        .stats {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 16px 24px;
+            padding: 8px 0 16px 0;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .stats strong {
+            color: var(--text);
+        }
+
+        /* ── Prompt Grid ── */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+            margin-top: 4px;
+        }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+        .empty-state .emoji {
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 12px;
+        }
+        .empty-state h3 {
+            color: var(--text);
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        /* ── Card ── */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 18px;
+            display: flex;
+            flex-direction: column;
+            transition: var(--transition);
+            position: relative;
+        }
+        .card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--text-muted);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+        .card-header .title {
+            flex: 1;
+            font-weight: 600;
+            font-size: 1rem;
+            line-height: 1.3;
+            word-break: break-word;
+            color: var(--text);
+        }
+        .card-header .favorite-btn {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: var(--transition);
+            padding: 0 2px;
+            line-height: 1;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+        .card-header .favorite-btn.active {
+            color: var(--favorite);
+        }
+        .card-header .favorite-btn:hover {
+            transform: scale(1.15);
+        }
+
+        .card-category {
+            display: inline-block;
+            font-size: 0.7rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            padding: 2px 10px;
+            border-radius: 20px;
+            background: rgba(88, 166, 255, 0.12);
+            color: var(--accent);
+            border: 1px solid rgba(88, 166, 255, 0.15);
+            margin-bottom: 8px;
+            align-self: flex-start;
+        }
+
+        .card-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            flex: 1;
+            margin-bottom: 12px;
+            word-break: break-word;
+            white-space: pre-wrap;
+        }
+        .card-text.expanded {
+            -webkit-line-clamp: unset;
+            max-height: none;
+        }
+
+        .card-actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+            margin-top: auto;
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
+        }
+        .card-actions .spacer {
+            flex: 1;
+        }
+        .card-actions .usage {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .card-actions .usage strong {
+            color: var(--text-secondary);
+        }
+
+        .copy-feedback {
+            font-size: 0.75rem;
+            color: var(--success);
+            opacity: 0;
+            transition: opacity 0.3s;
+            margin-left: 4px;
+        }
+        .copy-feedback.show {
+            opacity: 1;
+        }
+
+        /* ── Modal ── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.25s, visibility 0.25s;
+        }
+        .modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px 32px;
+            max-width: 560px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.96);
+            transition: transform 0.25s ease;
+        }
+        .modal-overlay.open .modal {
+            transform: scale(1);
+        }
+
+        .modal h2 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .modal .field {
+            margin-bottom: 16px;
+        }
+        .modal .field label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 4px;
+            color: var(--text-secondary);
+        }
+        .modal .field input,
+        .modal .field textarea,
+        .modal .field select {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: var(--transition);
+            outline: none;
+        }
+        .modal .field input:focus,
+        .modal .field textarea:focus,
+        .modal .field select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.12);
+        }
+        .modal .field textarea {
+            resize: vertical;
+            min-height: 120px;
+            font-family: inherit;
+        }
+        .modal .field input::placeholder,
+        .modal .field textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        .modal .field-check {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 0;
+        }
+        .modal .field-check input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .modal .field-check label {
+            font-size: 0.9rem;
+            cursor: pointer;
+            color: var(--text);
+        }
+
+        .modal .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
+        /* ── Toast ── */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px 24px;
+            font-size: 0.9rem;
+            color: var(--text);
+            box-shadow: var(--shadow);
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            pointer-events: none;
+            z-index: 2000;
+            max-width: 90%;
+            text-align: center;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 700px) {
+            .header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            .header-brand {
+                margin-right: 0;
+                font-size: 1.2rem;
+            }
+            .header-controls {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .header-controls .search-wrap input {
+                width: 100%;
+            }
+            .header-controls select {
+                min-width: 0;
+                flex: 1;
+            }
+            .header-controls .btn {
+                flex: 1;
+                justify-content: center;
+            }
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            .modal {
+                padding: 20px;
+            }
+            .stats {
+                font-size: 0.8rem;
+                gap: 8px 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+            }
+            .card {
+                padding: 14px;
+            }
+            .modal .modal-actions .btn {
+                flex: 1;
+                justify-content: center;
+            }
+            .header-controls .btn span {
+                display: none;
+            }
+        }
+
+        /* ── Utilities ── */
+        .hidden {
+            display: none !important;
+        }
+        .flex {
+            display: flex;
+        }
+        .items-center {
+            align-items: center;
+        }
+        .gap-1 {
+            gap: 4px;
+        }
+        .gap-2 {
+            gap: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-brand">
+                🔮 AI Prompt Vault
+                <span>β</span>
+            </div>
+            <div class="header-controls">
+                <div class="search-wrap">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="searchInput" placeholder="Search prompts…" />
+                </div>
+                <select id="categoryFilter">
+                    <option value="all">All categories</option>
+                </select>
+                <button class="btn btn-primary" id="addBtn">＋ <span>New</span></button>
+                <button class="btn btn-outline btn-sm" id="exportBtn" title="Export JSON">⬇</button>
+                <button class="btn btn-outline btn-sm" id="importBtn" title="Import JSON">⬆</button>
+                <input type="file" id="importFile" accept=".json" style="display:none" />
+            </div>
+        </header>
+
+        <!-- Stats -->
+        <div class="stats" id="statsBar">
+            <span>📦 <strong id="countTotal">0</strong> prompts</span>
+            <span>⭐ <strong id="countFavorites">0</strong> favorites</span>
+            <span>📊 <strong id="countUses">0</strong> total uses</span>
+        </div>
+
+        <!-- Grid -->
+        <div class="grid" id="grid"></div>
+
+        <!-- Toast -->
+        <div class="toast" id="toast"></div>
+
+        <!-- Modal -->
+        <div class="modal-overlay" id="modalOverlay">
+            <div class="modal" id="modal">
+                <h2 id="modalTitle">Add Prompt</h2>
+                <form id="promptForm" autocomplete="off">
+                    <input type="hidden" id="editId" value="" />
+
+                    <div class="field">
+                        <label for="promptTitle">Title</label>
+                        <input type="text" id="promptTitle" placeholder="e.g. ChatGPT System Prompt" required />
+                    </div>
+
+                    <div class="field">
+                        <label for="promptText">Prompt</label>
+                        <textarea id="promptText" placeholder="Write your prompt here…" required></textarea>
+                    </div>
+
+                    <div class="field">
+                        <label for="promptCategory">Category</label>
+                        <input type="text" id="promptCategory" placeholder="e.g. Writing, Coding, Research" list="categorySuggestions" />
+                        <datalist id="categorySuggestions"></datalist>
+                    </div>
+
+                    <div class="field field-check">
+                        <input type="checkbox" id="promptFavorite" />
+                        <label for="promptFavorite">⭐ Favorite</label>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-outline" id="modalCancelBtn">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="modalSaveBtn">💾 Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ── State ──
+            const STORAGE_KEY = 'ai_prompt_vault_data';
+            let prompts = [];
+            let nextId = 1;
+
+            // ── DOM refs ──
+            const grid = document.getElementById('grid');
+            const searchInput = document.getElementById('searchInput');
+            const categoryFilter = document.getElementById('categoryFilter');
+            const statsTotal = document.getElementById('countTotal');
+            const statsFav = document.getElementById('countFavorites');
+            const statsUses = document.getElementById('countUses');
+            const addBtn = document.getElementById('addBtn');
+            const exportBtn = document.getElementById('exportBtn');
+            const importBtn = document.getElementById('importBtn');
+            const importFile = document.getElementById('importFile');
+            const toastEl = document.getElementById('toast');
+
+            const modalOverlay = document.getElementById('modalOverlay');
+            const modalTitle = document.getElementById('modalTitle');
+            const promptForm = document.getElementById('promptForm');
+            const editId = document.getElementById('editId');
+            const promptTitle = document.getElementById('promptTitle');
+            const promptText = document.getElementById('promptText');
+            const promptCategory = document.getElementById('promptCategory');
+            const promptFavorite = document.getElementById('promptFavorite');
+            const modalCancelBtn = document.getElementById('modalCancelBtn');
+            const categorySuggestions = document.getElementById('categorySuggestions');
+
+            let toastTimeout = null;
+            let currentFilter = 'all';
+
+            // ── Data helpers ──
+            function generateId() {
+                return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+            }
+
+            function nowISO() {
+                return new Date().toISOString();
+            }
+
+            // ── Storage ──
+            function loadFromStorage() {
+                try {
+                    const raw = localStorage.getItem(STORAGE_KEY);
+                    if (raw) {
+                        const data = JSON.parse(raw);
+                        if (Array.isArray(data)) {
+                            prompts = data;
+                            // ensure each has an id
+                            prompts.forEach(p => {
+                                if (!p.id) p.id = generateId();
+                                if (p.usageCount === undefined) p.usageCount = 0;
+                                if (p.favorite === undefined) p.favorite = false;
+                                if (!p.createdAt) p.createdAt = nowISO();
+                                if (!p.updatedAt) p.updatedAt = nowISO();
+                            });
+                            return true;
+                        }
+                    }
+                } catch (_) { /* ignore */ }
+                return false;
+            }
+
+            function saveToStorage() {
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(prompts));
+                } catch (_) { /* ignore */ }
+            }
+
+            // ── Default data ──
+            function getDefaultPrompts() {
+                return [{
+                    id: generateId(),
+                    title: 'Creative Writing Muse',
+                    text: 'You are a creative writing assistant. Help me brainstorm story ideas, develop characters, and craft vivid scenes. Respond with imaginative, evocative prose.',
+                    category: 'Writing',
+                    favorite: true,
+                    usageCount: 12,
+                    createdAt: nowISO(),
+                    updatedAt: nowISO()
+                }, {
+                    id: generateId(),
+                    title: 'Code Debugger',
+                    text: 'Act as a senior developer. Review the following code, identify bugs, suggest fixes, and explain your reasoning. Be thorough and educational.',
+                    category: 'Coding',
+                    favorite: false,
+                    usageCount: 8,
+                    createdAt: nowISO(),
+                    updatedAt: nowISO()
+                }, {
+                    id: generateId(),
+                    title: 'Research Summarizer',
+                    text: 'Summarize the key findings from this research paper. Focus on methodology, results, and implications. Keep it concise and accessible.',
+                    category: 'Research',
+                    favorite: false,
+                    usageCount: 5,
+                    createdAt: nowISO(),
+                    updatedAt: nowISO()
+                }, {
+                    id: generateId(),
+                    title: 'Email Polisher',
+                    text: 'Revise this email to be more professional, clear, and courteous. Maintain the original intent while improving tone and structure.',
+                    category: 'Productivity',
+                    favorite: true,
+                    usageCount: 21,
+                    createdAt: nowISO(),
+                    updatedAt: nowISO()
+                }];
+            }
+
+            function initData() {
+                if (!loadFromStorage()) {
+                    prompts = getDefaultPrompts();
+                    saveToStorage();
+                }
+                // Ensure all prompts have valid fields
+                prompts.forEach(p => {
+                    if (!p.id) p.id = generateId();
+                    if (p.usageCount === undefined) p.usageCount = 0;
+                    if (p.favorite === undefined) p.favorite = false;
+                    if (!p.createdAt) p.createdAt = nowISO();
+                    if (!p.updatedAt) p.updatedAt = nowISO();
+                });
+                saveToStorage();
+            }
+
+            // ── CRUD ──
+            function getPrompt(id) {
+                return prompts.find(p => p.id === id);
+            }
+
+            function addPrompt(data) {
+                const now = nowISO();
+                const newPrompt = {
+                    id: generateId(),
+                    title: data.title.trim(),
+                    text: data.text.trim(),
+                    category: data.category.trim() || 'Uncategorized',
+                    favorite: !!data.favorite,
+                    usageCount: 0,
+                    createdAt: now,
+                    updatedAt: now
+                };
+                prompts.unshift(newPrompt);
+                saveToStorage();
+                return newPrompt;
+            }
+
+            function updatePrompt(id, data) {
+                const idx = prompts.findIndex(p => p.id === id);
+                if (idx === -1) return null;
+                const p = prompts[idx];
+                p.title = data.title.trim();
+                p.text = data.text.trim();
+                p.category = data.category.trim() || 'Uncategorized';
+                p.favorite = !!data.favorite;
+                p.updatedAt = nowISO();
+                saveToStorage();
+                return p;
+            }
+
+            function deletePrompt(id) {
+                const idx = prompts.findIndex(p => p.id === id);
+                if (idx === -1) return false;
+                prompts.splice(idx, 1);
+                saveToStorage();
+                return true;
+            }
+
+            function toggleFavorite(id) {
+                const p = getPrompt(id);
+                if (!p) return false;
+                p.favorite = !p.favorite;
+                p.updatedAt = nowISO();
+                saveToStorage();
+                return true;
+            }
+
+            function incrementUsage(id) {
+                const p = getPrompt(id);
+                if (!p) return false;
+                p.usageCount = (p.usageCount || 0) + 1;
+                p.updatedAt = nowISO();
+                saveToStorage();
+                return true;
+            }
+
+            // ── Filtering ──
+            function getFilteredPrompts() {
+                const search = searchInput.value.trim().toLowerCase();
+                const category = categoryFilter.value;
+                let result = prompts;
+
+                if (category !== 'all') {
+                    result = result.filter(p => p.category === category);
+                }
+
+                if (search) {
+                    result = result.filter(p =>
+                        p.title.toLowerCase().includes(search) ||
+                        p.text.toLowerCase().includes(search)
+                    );
+                }
+
+                return result;
+            }
+
+            function getAllCategories() {
+                const cats = new Set();
+                prompts.forEach(p => {
+                    if (p.category) cats.add(p.category);
+                });
+                return Array.from(cats).sort();
+            }
+
+            function updateCategoryFilter() {
+                const current = categoryFilter.value;
+                const cats = getAllCategories();
+                categoryFilter.innerHTML = '<option value="all">All categories</option>';
+                cats.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c;
+                    opt.textContent = c;
+                    categoryFilter.appendChild(opt);
+                });
+                // restore selection if possible
+                if (current !== 'all' && cats.includes(current)) {
+                    categoryFilter.value = current;
+                } else {
+                    categoryFilter.value = 'all';
+                }
+                currentFilter = categoryFilter.value;
+            }
+
+            function updateCategorySuggestions() {
+                const cats = getAllCategories();
+                categorySuggestions.innerHTML = '';
+                cats.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c;
+                    categorySuggestions.appendChild(opt);
+                });
+            }
+
+            // ── Render ──
+            function render() {
+                const filtered = getFilteredPrompts();
+                const total = prompts.length;
+                const favCount = prompts.filter(p => p.favorite).length;
+                const totalUses = prompts.reduce((sum, p) => sum + (p.usageCount || 0), 0);
+
+                statsTotal.textContent = total;
+                statsFav.textContent = favCount;
+                statsUses.textContent = totalUses;
+
+                if (filtered.length === 0) {
+                    grid.innerHTML = `
+                        <div class="empty-state">
+                            <span class="emoji">📭</span>
+                            <h3>No prompts found</h3>
+                            <p style="color:var(--text-muted);font-size:0.9rem;">
+                                ${prompts.length === 0 ? 'Click "New" to create your first prompt.' : 'Try adjusting your search or filter.'}
+                            </p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = '';
+                filtered.forEach(p => {
+                    const isFav = p.favorite ? 'active' : '';
+                    const star = p.favorite ? '⭐' : '☆';
+                    const category = p.category || 'Uncategorized';
+                    const usage = p.usageCount || 0;
+
+                    html += `
+                        <div class="card" data-id="${p.id}">
+                            <div class="card-header">
+                                <span class="title">${escapeHtml(p.title)}</span>
+                                <button class="favorite-btn ${isFav}" data-id="${p.id}" data-action="toggle-fav" title="Toggle favorite">${star}</button>
+                            </div>
+                            <span class="card-category">${escapeHtml(category)}</span>
+                            <div class="card-text">${escapeHtml(p.text)}</div>
+                            <div class="card-actions">
+                                <button class="btn btn-sm btn-success" data-id="${p.id}" data-action="copy">📋 Copy</button>
+                                <span class="copy-feedback" id="copyFeedback-${p.id}">✓ Copied</span>
+                                <div class="spacer"></div>
+                                <span class="usage">🔄 <strong>${usage}</strong> uses</span>
+                                <button class="btn-icon" data-id="${p.id}" data-action="edit" title="Edit">✏️</button>
+                                <button class="btn-icon" data-id="${p.id}" data-action="delete" title="Delete">🗑️</button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                grid.innerHTML = html;
+            }
+
+            // Simple escape (prevents XSS)
+            function escapeHtml(str) {
+                if (!str) return '';
+                return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+            }
+
+            // ── Toast ──
+            function showToast(msg, duration) {
+                duration = duration || 2000;
+                toastEl.textContent = msg;
+                toastEl.classList.add('show');
+                clearTimeout(toastTimeout);
+                toastTimeout = setTimeout(() => {
+                    toastEl.classList.remove('show');
+                }, duration);
+            }
+
+            // ── Copy ──
+            async function copyPrompt(id) {
+                const p = getPrompt(id);
+                if (!p) return;
+                try {
+                    await navigator.clipboard.writeText(p.text);
+                    incrementUsage(id);
+                    render();
+                    // Show feedback
+                    const fb = document.getElementById(`copyFeedback-${id}`);
+                    if (fb) {
+                        fb.classList.add('show');
+                        setTimeout(() => fb.classList.remove('show'), 1800);
+                    }
+                    showToast('📋 Copied to clipboard!', 1200);
+                } catch (_) {
+                    // Fallback
+                    try {
+                        const ta = document.createElement('textarea');
+                        ta.value = p.text;
+                        document.body.appendChild(ta);
+                        ta.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(ta);
+                        incrementUsage(id);
+                        render();
+                        const fb = document.getElementById(`copyFeedback-${id}`);
+                        if (fb) {
+                            fb.classList.add('show');
+                            setTimeout(() => fb.classList.remove('show'), 1800);
+                        }
+                        showToast('📋 Copied to clipboard!', 1200);
+                    } catch (e) {
+                        showToast('❌ Could not copy. Please select and copy manually.', 2500);
+                    }
+                }
+            }
+
+            // ── Modal ──
+            function openModal(mode, id) {
+                if (mode === 'add') {
+                    modalTitle.textContent = 'Add Prompt';
+                    editId.value = '';
+                    promptTitle.value = '';
+                    promptText.value = '';
+                    promptCategory.value = '';
+                    promptFavorite.checked = false;
+                } else if (mode === 'edit' && id) {
+                    const p = getPrompt(id);
+                    if (!p) return;
+                    modalTitle.textContent = 'Edit Prompt';
+                    editId.value = p.id;
+                    promptTitle.value = p.title;
+                    promptText.value = p.text;
+                    promptCategory.value = p.category || '';
+                    promptFavorite.checked = !!p.favorite;
+                } else {
+                    return;
+                }
+                updateCategorySuggestions();
+                modalOverlay.classList.add('open');
+                // focus first input
+                setTimeout(() => promptTitle.focus(), 100);
+            }
+
+            function closeModal() {
+                modalOverlay.classList.remove('open');
+            }
+
+            function handleFormSubmit(e) {
+                e.preventDefault();
+                const id = editId.value;
+                const title = promptTitle.value.trim();
+                const text = promptText.value.trim();
+                const category = promptCategory.value.trim();
+                const favorite = promptFavorite.checked;
+
+                if (!title || !text) {
+                    showToast('⚠️ Please fill in both title and prompt.', 2000);
+                    return;
+                }
+
+                if (id) {
+                    // Edit
+                    const updated = updatePrompt(id, { title, text, category, favorite });
+                    if (updated) {
+                        showToast('✅ Prompt updated!', 1500);
+                        closeModal();
+                        render();
+                    } else {
+                        showToast('❌ Could not update prompt.', 2000);
+                    }
+                } else {
+                    // Add
+                    const added = addPrompt({ title, text, category, favorite });
+                    if (added) {
+                        showToast('✅ Prompt added!', 1500);
+                        closeModal();
+                        render();
+                        updateCategoryFilter();
+                        updateCategorySuggestions();
+                    } else {
+                        showToast('❌ Could not add prompt.', 2000);
+                    }
+                }
+            }
+
+            // ── Export / Import ──
+            function exportData() {
+                try {
+                    const json = JSON.stringify(prompts, null, 2);
+                    const blob = new Blob([json], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `prompt-vault-${new Date().toISOString().slice(0,10)}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    showToast('📦 Export successful!', 1500);
+                } catch (_) {
+                    showToast('❌ Export failed.', 2000);
+                }
+            }
+
+            function importData(file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if (!Array.isArray(data)) {
+                            showToast('❌ Invalid JSON: expected an array.', 2500);
+                            return;
+                        }
+                        // Validate and import
+                        const imported = data.map(item => {
+                            const now = nowISO();
+                            return {
+                                id: item.id || generateId(),
+                                title: item.title || 'Untitled',
+                                text: item.text || '',
+                                category: item.category || 'Uncategorized',
+                                favorite: !!item.favorite,
+                                usageCount: typeof item.usageCount === 'number' ? item.usageCount : 0,
+                                createdAt: item.createdAt || now,
+                                updatedAt: item.updatedAt || now
+                            };
+                        });
+                        if (imported.length === 0) {
+                            showToast('⚠️ No valid prompts found in file.', 2000);
+                            return;
+                        }
+                        // Merge: replace all prompts
+                        prompts = imported;
+                        saveToStorage();
+                        updateCategoryFilter();
+                        updateCategorySuggestions();
+                        render();
+                        showToast(`✅ Imported ${imported.length} prompts!`, 2000);
+                    } catch (err) {
+                        showToast('❌ Failed to parse JSON. Please check the file format.', 3000);
+                    }
+                };
+                reader.onerror = function() {
+                    showToast('❌ Failed to read file.', 2000);
+                };
+                reader.readAsText(file);
+            }
+
+            // ── Event Delegation ──
+            grid.addEventListener('click', function(e) {
+                const target = e.target.closest('[data-action]');
+                if (!target) return;
+                const action = target.dataset.action;
+                const id = target.dataset.id;
+                if (!id) return;
+
+                if (action === 'copy') {
+                    copyPrompt(id);
+                } else if (action === 'edit') {
+                    openModal('edit', id);
+                } else if (action === 'delete') {
+                    const p = getPrompt(id);
+                    if (!p) return;
+                    if (confirm(`Delete "${p.title}"?`)) {
+                        if (deletePrompt(id)) {
+                            showToast('🗑️ Prompt deleted.', 1500);
+                            updateCategoryFilter();
+                            updateCategorySuggestions();
+                            render();
+                        } else {
+                            showToast('❌ Could not delete.', 2000);
+                        }
+                    }
+                } else if (action === 'toggle-fav') {
+                    if (toggleFavorite(id)) {
+                        render();
+                        // update stats
+                        const favCount = prompts.filter(p => p.favorite).length;
+                        statsFav.textContent = favCount;
+                    }
+                }
+            });
+
+            // ── Search ──
+            searchInput.addEventListener('input', function() {
+                render();
+            });
+
+            // ── Category filter ──
+            categoryFilter.addEventListener('change', function() {
+                render();
+            });
+
+            // ── Add button ──
+            addBtn.addEventListener('click', function() {
+                openModal('add');
+            });
+
+            // ── Modal controls ──
+            modalCancelBtn.addEventListener('click', closeModal);
+            modalOverlay.addEventListener('click', function(e) {
+                if (e.target === modalOverlay) closeModal();
+            });
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && modalOverlay.classList.contains('open')) {
+                    closeModal();
+                }
+            });
+            promptForm.addEventListener('submit', handleFormSubmit);
+
+            // ── Export / Import ──
+            exportBtn.addEventListener('click', exportData);
+            importBtn.addEventListener('click', function() {
+                importFile.click();
+            });
+            importFile.addEventListener('change', function(e) {
+                if (this.files && this.files[0]) {
+                    importData(this.files[0]);
+                }
+                this.value = '';
+            });
+
+            // ── Init ──
+            function init() {
+                initData();
+                updateCategoryFilter();
+                updateCategorySuggestions();
+                render();
+            }
+
+            init();
+
+        })();
+    </script>
+</body>
+</html>

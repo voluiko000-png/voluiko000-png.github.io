@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Focus + Habit Tracker</title>
+    <style>
+        /* ── Reset & Base ── */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        :root {
+            --bg: #0b0b18;
+            --bg-card: #151528;
+            --bg-card-hover: #1e1e3a;
+            --bg-input: #1a1a32;
+            --border: #2a2a4a;
+            --text: #e4e4f0;
+            --text-muted: #8a8aaa;
+            --text-dim: #5a5a7a;
+            --primary: #7c5cfc;
+            --primary-dim: #5a3aba;
+            --accent: #fc5c7c;
+            --accent-dim: #cc3a5a;
+            --success: #5cfc8c;
+            --success-dim: #3acc6a;
+            --warn: #fcb45c;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+            --radius: 14px;
+            --radius-sm: 8px;
+            --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            --transition: 0.2s ease;
+        }
+        html {
+            font-size: 16px;
+            scroll-behavior: smooth;
+        }
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dim);
+        }
+
+        /* ── App Container ── */
+        .app {
+            max-width: 820px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 0 0 32px 0;
+        }
+
+        /* ── Header ── */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0 20px 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .header .badge {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            background: var(--bg-card);
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+        }
+
+        /* ── Cards ── */
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 20px 22px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+            transition: border-color var(--transition);
+        }
+        .card-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card-title .count {
+            font-size: 0.7rem;
+            background: var(--bg);
+            padding: 0 10px;
+            border-radius: 12px;
+            color: var(--text-dim);
+            border: 1px solid var(--border);
+        }
+
+        /* ── Timer ── */
+        .timer-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 4px 0 8px 0;
+        }
+        .timer-ring-wrap {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            margin: 0 auto 10px;
+        }
+        .timer-ring-wrap svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+        .timer-ring-bg {
+            fill: none;
+            stroke: var(--border);
+            stroke-width: 6;
+        }
+        .timer-ring-progress {
+            fill: none;
+            stroke: var(--primary);
+            stroke-width: 6;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.3s ease, stroke 0.3s ease;
+        }
+        .timer-ring-progress.break {
+            stroke: var(--accent);
+        }
+        .timer-time {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2.8rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 0.02em;
+            color: var(--text);
+            line-height: 1;
+        }
+        .timer-time .status-label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            letter-spacing: 0.06em;
+            margin-top: 4px;
+            text-transform: uppercase;
+        }
+        .timer-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 4px;
+        }
+        .timer-controls .btn {
+            min-width: 68px;
+        }
+        .timer-settings {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+        .timer-settings label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .timer-settings input[type="number"] {
+            width: 50px;
+            padding: 4px 6px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-align: center;
+            transition: border-color var(--transition);
+        }
+        .timer-settings input[type="number"]:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .timer-settings input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+        }
+        .timer-settings input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        .timer-status {
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 8px;
+            min-height: 1.4em;
+        }
+        .timer-status .highlight {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .timer-status .highlight.break {
+            color: var(--accent);
+        }
+
+        /* ── Buttons ── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 18px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background var(--transition), transform 0.1s, box-shadow var(--transition);
+            background: var(--bg-input);
+            color: var(--text);
+            border: 1px solid var(--border);
+            font-family: var(--font);
+            line-height: 1.4;
+        }
+        .btn:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--text-muted);
+        }
+        .btn:active {
+            transform: scale(0.96);
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+        .btn-primary:hover {
+            background: var(--primary-dim);
+            border-color: var(--primary-dim);
+        }
+        .btn-accent {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+        .btn-accent:hover {
+            background: var(--accent-dim);
+            border-color: var(--accent-dim);
+        }
+        .btn-success {
+            background: var(--success);
+            color: #0b0b18;
+            border-color: var(--success);
+        }
+        .btn-success:hover {
+            background: var(--success-dim);
+            border-color: var(--success-dim);
+        }
+        .btn-sm {
+            padding: 4px 12px;
+            font-size: 0.75rem;
+        }
+        .btn-icon {
+            padding: 6px 10px;
+            font-size: 1rem;
+            min-width: 36px;
+        }
+        .btn-danger {
+            background: transparent;
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+        .btn-danger:hover {
+            background: var(--accent);
+            color: #fff;
+        }
+        .btn:disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        /* ── Habits ── */
+        .habit-add {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+        .habit-add input {
+            flex: 1;
+            min-width: 160px;
+            padding: 10px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-size: 0.9rem;
+            font-family: var(--font);
+            transition: border-color var(--transition);
+        }
+        .habit-add input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .habit-add input::placeholder {
+            color: var(--text-dim);
+        }
+
+        .habit-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+        .habit-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            background: var(--bg);
+            border-radius: var(--radius-sm);
+            border: 1px solid transparent;
+            transition: border-color var(--transition), background var(--transition);
+        }
+        .habit-item:hover {
+            border-color: var(--border);
+            background: var(--bg-card-hover);
+        }
+        .habit-item .check {
+            flex-shrink: 0;
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            border: 2px solid var(--border);
+            background: var(--bg-input);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all var(--transition);
+            font-size: 0.7rem;
+            color: transparent;
+        }
+        .habit-item .check.done {
+            background: var(--success);
+            border-color: var(--success);
+            color: #0b0b18;
+        }
+        .habit-item .check.done::after {
+            content: "✓";
+            font-weight: 700;
+        }
+        .habit-item .name {
+            flex: 1;
+            font-size: 0.9rem;
+            font-weight: 500;
+            word-break: break-word;
+        }
+        .habit-item .name.done {
+            color: var(--text-muted);
+            text-decoration: line-through;
+        }
+        .habit-item .streak {
+            flex-shrink: 0;
+            font-size: 0.75rem;
+            color: var(--warn);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+        .habit-item .streak .num {
+            background: var(--bg-input);
+            padding: 0 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+        }
+        .habit-item .actions {
+            flex-shrink: 0;
+            display: flex;
+            gap: 4px;
+        }
+        .habit-item .actions .btn {
+            padding: 2px 8px;
+            font-size: 0.7rem;
+            min-width: auto;
+            background: transparent;
+            border-color: transparent;
+            color: var(--text-dim);
+        }
+        .habit-item .actions .btn:hover {
+            background: var(--bg-input);
+            border-color: var(--border);
+            color: var(--text);
+        }
+        .habit-item .actions .btn-del:hover {
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+        .habit-item .actions .btn-edit:hover {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+        .habit-empty {
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            text-align: center;
+            padding: 24px 0;
+        }
+
+        /* ── Weekly Grid ── */
+        .weekly-grid-wrap {
+            overflow-x: auto;
+            margin-top: 6px;
+        }
+        .weekly-grid {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            min-width: 400px;
+        }
+        .weekly-grid th {
+            text-align: center;
+            padding: 6px 4px;
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            border-bottom: 1px solid var(--border);
+        }
+        .weekly-grid td {
+            text-align: center;
+            padding: 6px 4px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-dim);
+            font-weight: 500;
+        }
+        .weekly-grid .habit-label {
+            text-align: left;
+            font-weight: 500;
+            color: var(--text);
+            font-size: 0.8rem;
+            white-space: nowrap;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .weekly-grid .cell-done {
+            color: var(--success);
+            font-weight: 700;
+        }
+        .weekly-grid .cell-done::before {
+            content: "✓";
+        }
+        .weekly-grid .cell-today {
+            background: var(--bg-input);
+            border-radius: 4px;
+        }
+        .weekly-grid .cell-today .cell-done {
+            color: var(--success);
+        }
+        .weekly-grid .cell-today .cell-miss {
+            color: var(--accent);
+        }
+        .weekly-grid .cell-miss::before {
+            content: "—";
+        }
+        .weekly-grid .cell-empty {
+            color: var(--text-dim);
+        }
+        .weekly-grid .cell-empty::before {
+            content: "·";
+        }
+
+        /* ── Export / Import ── */
+        .io-bar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-top: 4px;
+        }
+        .io-bar .btn {
+            font-size: 0.8rem;
+        }
+        .io-bar .file-wrap {
+            position: relative;
+            display: inline-flex;
+        }
+        .io-bar .file-wrap input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        /* ── Modal (inline edit) ── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 28px 30px;
+            max-width: 420px;
+            width: 100%;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            transform: scale(0.94);
+            transition: transform 0.25s ease;
+        }
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+        .modal h3 {
+            font-size: 1.1rem;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+        .modal label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+        .modal input {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-size: 0.95rem;
+            font-family: var(--font);
+            margin-bottom: 16px;
+            transition: border-color var(--transition);
+        }
+        .modal input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .modal .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        /* ── Notification permission toast ── */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 12px 20px;
+            font-size: 0.85rem;
+            color: var(--text);
+            box-shadow: var(--shadow);
+            opacity: 0;
+            transition: all 0.4s ease;
+            z-index: 2000;
+            max-width: 90%;
+            text-align: center;
+            pointer-events: none;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+            pointer-events: auto;
+        }
+        .toast .btn {
+            margin-left: 12px;
+            padding: 4px 14px;
+            font-size: 0.75rem;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .card {
+                padding: 16px;
+            }
+            .timer-ring-wrap {
+                width: 150px;
+                height: 150px;
+            }
+            .timer-time {
+                font-size: 2.2rem;
+            }
+            .timer-settings {
+                gap: 10px;
+            }
+            .timer-settings label {
+                font-size: 0.7rem;
+            }
+            .timer-settings input[type="number"] {
+                width: 44px;
+                font-size: 0.8rem;
+            }
+            .habit-item {
+                flex-wrap: wrap;
+                padding: 8px 10px;
+            }
+            .habit-item .name {
+                flex-basis: 100%;
+                order: 2;
+                margin-left: 32px;
+                font-size: 0.85rem;
+            }
+            .habit-item .streak {
+                order: 3;
+            }
+            .habit-item .actions {
+                order: 4;
+                margin-left: auto;
+            }
+            .habit-item .check {
+                order: 1;
+            }
+            .weekly-grid {
+                font-size: 0.7rem;
+                min-width: 300px;
+            }
+            .weekly-grid th,
+            .weekly-grid td {
+                padding: 4px 2px;
+            }
+            .header h1 {
+                font-size: 1.2rem;
+            }
+            .modal {
+                padding: 20px;
+            }
+            .io-bar .btn {
+                font-size: 0.75rem;
+                padding: 6px 14px;
+            }
+        }
+        @media (max-width: 400px) {
+            .timer-ring-wrap {
+                width: 120px;
+                height: 120px;
+            }
+            .timer-time {
+                font-size: 1.8rem;
+            }
+            .timer-controls .btn {
+                min-width: 54px;
+                padding: 6px 12px;
+                font-size: 0.75rem;
+            }
+            .habit-add input {
+                min-width: 120px;
+                font-size: 0.8rem;
+                padding: 8px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app" id="app">
+
+        <!-- ─── HEADER ─── -->
+        <header class="header">
+            <h1>✦ Focus + Tracker</h1>
+            <span class="badge" id="todayBadge"></span>
+        </header>
+
+        <!-- ─── TIMER CARD ─── -->
+        <section class="card" id="timerCard">
+            <div class="card-title">⏱ Focus Timer</div>
+
+            <div class="timer-display">
+                <div class="timer-ring-wrap">
+                    <svg viewBox="0 0 120 120">
+                        <circle class="timer-ring-bg" cx="60" cy="60" r="52" />
+                        <circle class="timer-ring-progress" id="ringProgress"
+                        cx="60" cy="60" r="52"
+                        stroke-dasharray="326.726" stroke-dashoffset="0" />
+                    </svg>
+                    <div class="timer-time">
+                        <span id="timerDisplay">25:00</span>
+                        <span class="status-label" id="timerStatusLabel">IDLE</span>
+                    </div>
+                </div>
+
+                <div class="timer-controls">
+                    <button class="btn btn-primary" id="timerStartBtn">▶ Start</button>
+                    <button class="btn" id="timerPauseBtn" disabled>⏸ Pause</button>
+                    <button class="btn" id="timerResetBtn">↻ Reset</button>
+                </div>
+
+                <div class="timer-status" id="timerStatusMsg">
+                    Press <span class="highlight">Start</span> to begin a work session
+                </div>
+            </div>
+
+            <div class="timer-settings">
+                <label>
+                    Work
+                    <input type="number" id="workMinutes" value="25" min="1" max="120" />
+                    min
+                </label>
+                <label>
+                    Break
+                    <input type="number" id="breakMinutes" value="5" min="1" max="60" />
+                    min
+                </label>
+                <label style="gap:4px;">
+                    <input type="checkbox" id="soundToggle" checked />
+                    🔔 Sound
+                </label>
+                <label style="gap:4px;">
+                    <input type="checkbox" id="notifToggle" checked />
+                    📬 Notify
+                </label>
+            </div>
+        </section>
+
+        <!-- ─── HABITS CARD ─── -->
+        <section class="card" id="habitsCard">
+            <div class="card-title">
+                📋 Daily Habits
+                <span class="count" id="habitCount">0</span>
+            </div>
+
+            <div class="habit-add">
+                <input type="text" id="habitInput" placeholder="New habit name…" maxlength="60" />
+                <button class="btn btn-primary" id="habitAddBtn">+ Add</button>
+            </div>
+
+            <div class="habit-list" id="habitList">
+                <div class="habit-empty">No habits yet. Add one above!</div>
+            </div>
+
+            <div style="margin-top:18px; border-top:1px solid var(--border); padding-top:16px;">
+                <div class="card-title" style="margin-bottom:8px; font-size:0.75rem;">
+                    📅 Weekly Overview
+                </div>
+                <div class="weekly-grid-wrap">
+                    <table class="weekly-grid" id="weeklyGrid">
+                        <thead id="weeklyHead"></thead>
+                        <tbody id="weeklyBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ─── IMPORT / EXPORT ─── -->
+        <section class="card" style="border-color:var(--border);">
+            <div class="card-title" style="margin-bottom:8px;">💾 Data</div>
+            <div class="io-bar">
+                <button class="btn" id="exportBtn">⬇ Export JSON</button>
+                <div class="file-wrap">
+                    <button class="btn" id="importBtn">⬆ Import JSON</button>
+                    <input type="file" id="importFile" accept=".json" />
+                </div>
+                <button class="btn btn-danger btn-sm" id="clearAllBtn" style="margin-left:auto;">✕ Clear All</button>
+            </div>
+        </section>
+
+        <!-- ─── EDIT MODAL ─── -->
+        <div class="modal-overlay" id="editModal">
+            <div class="modal">
+                <h3 id="editModalTitle">Edit Habit</h3>
+                <label for="editInput">Habit name</label>
+                <input type="text" id="editInput" maxlength="60" />
+                <div class="modal-actions">
+                    <button class="btn" id="editCancelBtn">Cancel</button>
+                    <button class="btn btn-primary" id="editSaveBtn">Save</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── TOAST ─── -->
+        <div class="toast" id="toast"></div>
+    </div>
+
+    <script>
+        /* ────────────────────────────────────────────────
+           FOCUS TIMER + HABIT TRACKER — Complete App
+           ──────────────────────────────────────────────── */
+
+        (() => {
+            'use strict';
+
+            // ─── DOM refs ───
+            const $ = (sel, ctx = document) => ctx.querySelector(sel);
+            const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
+
+            const timerDisplay = $('#timerDisplay');
+            const ringProgress = $('#ringProgress');
+            const timerStatusLabel = $('#timerStatusLabel');
+            const timerStatusMsg = $('#timerStatusMsg');
+            const startBtn = $('#timerStartBtn');
+            const pauseBtn = $('#timerPauseBtn');
+            const resetBtn = $('#timerResetBtn');
+            const workInput = $('#workMinutes');
+            const breakInput = $('#breakMinutes');
+            const soundToggle = $('#soundToggle');
+            const notifToggle = $('#notifToggle');
+
+            const habitInput = $('#habitInput');
+            const habitAddBtn = $('#habitAddBtn');
+            const habitList = $('#habitList');
+            const habitCount = $('#habitCount');
+            const weeklyHead = $('#weeklyHead');
+            const weeklyBody = $('#weeklyBody');
+
+            const exportBtn = $('#exportBtn');
+            const importBtn = $('#importBtn');
+            const importFile = $('#importFile');
+            const clearAllBtn = $('#clearAllBtn');
+
+            const editModal = $('#editModal');
+            const editInput = $('#editInput');
+            const editCancelBtn = $('#editCancelBtn');
+            const editSaveBtn = $('#editSaveBtn');
+            const editModalTitle = $('#editModalTitle');
+
+            const toast = $('#toast');
+            const todayBadge = $('#todayBadge');
+
+            // ─── State ───
+            const STATE = {
+                timer: {
+                    workMinutes: 25,
+                    breakMinutes: 5,
+                    remaining: 25 * 60, // seconds
+                    isRunning: false,
+                    isPaused: false,
+                    isWork: true,
+                    finished: false,
+                    intervalId: null,
+                },
+                habits: {}, // { id: { id, name, createdAt, completions: { 'YYYY-MM-DD': true } } }
+                editingId: null,
+            };
+
+            const STORAGE_KEY = 'focus_habit_data';
+
+            // ─── Helpers ───
+            function formatTime(sec) {
+                const m = Math.floor(sec / 60);
+                const s = sec % 60;
+                return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            }
+
+            function getToday() {
+                const d = new Date();
+                return d.toISOString().split('T')[0];
+            }
+
+            function getWeekDays() {
+                const today = new Date();
+                const days = [];
+                for (let i = 6; i >= 0; i--) {
+                    const d = new Date(today);
+                    d.setDate(d.getDate() - i);
+                    days.push(d.toISOString().split('T')[0]);
+                }
+                return days;
+            }
+
+            function getDayName(dateStr) {
+                const d = new Date(dateStr + 'T00:00:00');
+                return d.toLocaleDateString('en-US', { weekday: 'short' });
+            }
+
+            function getShortDate(dateStr) {
+                const d = new Date(dateStr + 'T00:00:00');
+                return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }
+
+            function generateId() {
+                return Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
+            }
+
+            function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+            // ─── Toast ───
+            let toastTimeout = null;
+
+            function showToast(msg, duration = 3000) {
+                toast.textContent = msg;
+                toast.classList.add('show');
+                clearTimeout(toastTimeout);
+                toastTimeout = setTimeout(() => toast.classList.remove('show'), duration);
+            }
+
+            // ─── Sound (Web Audio) ───
+            let audioCtx = null;
+
+            function playBeep() {
+                try {
+                    if (!audioCtx) audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.frequency.value = 880;
+                    osc.type = 'sine';
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                    osc.start(audioCtx.currentTime);
+                    osc.stop(audioCtx.currentTime + 0.4);
+
+                    // second beep
+                    setTimeout(() => {
+                        const osc2 = audioCtx.createOscillator();
+                        const gain2 = audioCtx.createGain();
+                        osc2.connect(gain2);
+                        gain2.connect(audioCtx.destination);
+                        osc2.frequency.value = 1100;
+                        osc2.type = 'sine';
+                        gain2.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                        gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                        osc2.start(audioCtx.currentTime);
+                        osc2.stop(audioCtx.currentTime + 0.3);
+                    }, 300);
+                } catch (_) { /* silent fail */ }
+            }
+
+            // ─── Notification ───
+            function sendNotification(title, body) {
+                if (!notifToggle.checked) return;
+                if (!('Notification' in window)) return;
+                if (Notification.permission === 'granted') {
+                    new Notification(title, { body, icon: '🔔' });
+                } else if (Notification.permission === 'default') {
+                    Notification.requestPermission().then(perm => {
+                        if (perm === 'granted') {
+                            new Notification(title, { body, icon: '🔔' });
+                        }
+                    });
+                }
+            }
+
+            // ─── Timer ───
+            const CIRCUMFERENCE = 2 * Math.PI * 52; // r=52
+
+            function updateTimerUI() {
+                const t = STATE.timer;
+                const total = t.isWork ? t.workMinutes * 60 : t.breakMinutes * 60;
+                const frac = total > 0 ? t.remaining / total : 0;
+                const offset = CIRCUMFERENCE * (1 - frac);
+                ringProgress.setAttribute('stroke-dashoffset', offset);
+                ringProgress.classList.toggle('break', !t.isWork);
+                timerDisplay.textContent = formatTime(t.remaining);
+
+                const label = t.isWork ? 'WORK' : 'BREAK';
+                const status = t.isRunning ? (t.isPaused ? 'PAUSED' : 'RUNNING') :
+                    (t.finished ? 'DONE' : 'IDLE');
+                timerStatusLabel.textContent = status;
+                timerStatusLabel.style.color = t.isWork ? 'var(--primary)' : 'var(--accent)';
+
+                // status message
+                if (t.finished) {
+                    timerStatusMsg.innerHTML = `✅ ${t.isWork ? 'Work' : 'Break'} session complete!`;
+                } else if (t.isRunning && !t.isPaused) {
+                    timerStatusMsg.innerHTML = `⏳ ${t.isWork ? 'Focus' : 'Rest'} in progress…`;
+                } else if (t.isPaused) {
+                    timerStatusMsg.innerHTML = `⏸ Paused — press <span class="highlight">Start</span> to resume`;
+                } else {
+                    timerStatusMsg.innerHTML =
+                        `Press <span class="highlight">Start</span> to begin a ${t.isWork ? 'work' : 'break'} session`;
+                }
+                // buttons
+                startBtn.disabled = t.isRunning && !t.isPaused;
+                pauseBtn.disabled = !t.isRunning || t.isPaused || t.finished;
+                if (t.isPaused) {
+                    startBtn.textContent = '▶ Resume';
+                    startBtn.disabled = false;
+                } else {
+                    startBtn.textContent = '▶ Start';
+                }
+                pauseBtn.textContent = '⏸ Pause';
+            }
+
+            function timerTick() {
+                const t = STATE.timer;
+                if (!t.isRunning || t.isPaused || t.finished) return;
+                t.remaining -= 1;
+                if (t.remaining <= 0) {
+                    t.remaining = 0;
+                    t.finished = true;
+                    t.isRunning = false;
+                    clearInterval(t.intervalId);
+                    t.intervalId = null;
+                    updateTimerUI();
+
+                    // sound & notification
+                    if (soundToggle.checked) playBeep();
+                    const phase = t.isWork ? 'Work' : 'Break';
+                    sendNotification(`${phase} session complete!`, `Your ${phase.toLowerCase()} timer is up.`);
+                    showToast(`✅ ${phase} session complete!`, 4000);
+
+                    // auto-switch after a short delay
+                    setTimeout(() => {
+                        if (!STATE.timer.finished) return;
+                        // switch mode
+                        STATE.timer.isWork = !STATE.timer.isWork;
+                        const total = STATE.timer.isWork ? STATE.timer.workMinutes * 60 : STATE.timer.breakMinutes * 60;
+                        STATE.timer.remaining = total;
+                        STATE.timer.finished = false;
+                        STATE.timer.isRunning = false;
+                        STATE.timer.isPaused = false;
+                        if (STATE.timer.intervalId) {
+                            clearInterval(STATE.timer.intervalId);
+                            STATE.timer.intervalId = null;
+                        }
+                        updateTimerUI();
+                        timerStatusMsg.innerHTML =
+                            `🔄 Switched to <span class="highlight${STATE.timer.isWork ? '' : ' break'}">${STATE.timer.isWork ? 'WORK' : 'BREAK'}</span> — press Start`;
+                        saveState();
+                    }, 1800);
+                    saveState();
+                    return;
+                }
+                updateTimerUI();
+                saveState();
+            }
+
+            function startTimer() {
+                const t = STATE.timer;
+                if (t.isRunning && !t.isPaused) return;
+                if (t.finished) {
+                    // reset first
+                    resetTimer();
+                    // then start
+                    setTimeout(() => startTimer(), 50);
+                    return;
+                }
+                if (t.isPaused) {
+                    t.isPaused = false;
+                    t.isRunning = true;
+                    t.intervalId = setInterval(timerTick, 1000);
+                    updateTimerUI();
+                    saveState();
+                    return;
+                }
+                // fresh start
+                const work = parseInt(workInput.value, 10) || 25;
+                const brk = parseInt(breakInput.value, 10) || 5;
+                t.workMinutes = clamp(work, 1, 120);
+                t.breakMinutes = clamp(brk, 1, 60);
+                workInput.value = t.workMinutes;
+                breakInput.value = t.breakMinutes;
+                t.remaining = t.isWork ? t.workMinutes * 60 : t.breakMinutes * 60;
+                t.finished = false;
+                t.isRunning = true;
+                t.isPaused = false;
+                if (t.intervalId) clearInterval(t.intervalId);
+                t.intervalId = setInterval(timerTick, 1000);
+                updateTimerUI();
+                saveState();
+            }
+
+            function pauseTimer() {
+                const t = STATE.timer;
+                if (!t.isRunning || t.isPaused || t.finished) return;
+                t.isPaused = true;
+                if (t.intervalId) {
+                    clearInterval(t.intervalId);
+                    t.intervalId = null;
+                }
+                updateTimerUI();
+                saveState();
+            }
+
+            function resetTimer() {
+                const t = STATE.timer;
+                if (t.intervalId) {
+                    clearInterval(t.intervalId);
+                    t.intervalId = null;
+                }
+                t.isRunning = false;
+                t.isPaused = false;
+                t.finished = false;
+                const work = parseInt(workInput.value, 10) || 25;
+                const brk = parseInt(breakInput.value, 10) || 5;
+                t.workMinutes = clamp(work, 1, 120);
+                t.breakMinutes = clamp(brk, 1, 60);
+                workInput.value = t.workMinutes;
+                breakInput.value = t.breakMinutes;
+                t.remaining = t.isWork ? t.workMinutes * 60 : t.breakMinutes * 60;
+                updateTimerUI();
+                saveState();
+            }
+
+            // ─── Habits ───
+            function getStreak(habit) {
+                const today = getToday();
+                const comps = habit.completions || {};
+                let streak = 0;
+                let d = new Date(today + 'T00:00:00');
+                while (true) {
+                    const key = d.toISOString().split('T')[0];
+                    if (comps[key]) {
+                        streak++;
+                        d.setDate(d.getDate() - 1);
+                    } else {
+                        break;
+                    }
+                }
+                return streak;
+            }
+
+            function renderHabits() {
+                const ids = Object.keys(STATE.habits);
+                habitCount.textContent = ids.length;
+                if (ids.length === 0) {
+                    habitList.innerHTML = `<div class="habit-empty">No habits yet. Add one above!</div>`;
+                    renderWeeklyGrid();
+                    return;
+                }
+                const today = getToday();
+                let html = '';
+                for (const id of ids) {
+                    const h = STATE.habits[id];
+                    const done = !!(h.completions && h.completions[today]);
+                    const streak = getStreak(h);
+                    const nameEsc = h.name.replace(/[&<>"]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' } [
+                        m
+                    ]));
+                    html += `
+                <div class="habit-item" data-id="${id}">
+                  <div class="check ${done ? 'done' : ''}" data-action="toggle" data-id="${id}"></div>
+                  <span class="name ${done ? 'done' : ''}">${nameEsc}</span>
+                  <span class="streak">🔥 <span class="num">${streak}</span> day${streak !== 1 ? 's' : ''}</span>
+                  <div class="actions">
+                    <button class="btn btn-sm btn-edit" data-action="edit" data-id="${id}">✎</button>
+                    <button class="btn btn-sm btn-del" data-action="delete" data-id="${id}">✕</button>
+                  </div>
+                </div>
+              `;
+                }
+                habitList.innerHTML = html;
+                renderWeeklyGrid();
+            }
+
+            function addHabit(name) {
+                name = name.trim();
+                if (!name) return false;
+                const id = generateId();
+                STATE.habits[id] = {
+                    id,
+                    name,
+                    createdAt: Date.now(),
+                    completions: {},
+                };
+                saveState();
+                renderHabits();
+                return true;
+            }
+
+            function deleteHabit(id) {
+                if (!STATE.habits[id]) return;
+                delete STATE.habits[id];
+                saveState();
+                renderHabits();
+            }
+
+            function toggleHabitToday(id) {
+                const h = STATE.habits[id];
+                if (!h) return;
+                const today = getToday();
+                if (!h.completions) h.completions = {};
+                if (h.completions[today]) {
+                    delete h.completions[today];
+                } else {
+                    h.completions[today] = true;
+                }
+                saveState();
+                renderHabits();
+            }
+
+            function editHabit(id, newName) {
+                const h = STATE.habits[id];
+                if (!h) return;
+                newName = newName.trim();
+                if (!newName) return;
+                h.name = newName;
+                saveState();
+                renderHabits();
+            }
+
+            // ─── Weekly Grid ───
+            function renderWeeklyGrid() {
+                const days = getWeekDays();
+                const today = getToday();
+                const ids = Object.keys(STATE.habits);
+
+                // head
+                let headHtml = '<tr><th>Habit</th>';
+                for (const d of days) {
+                    const isToday = d === today;
+                    const label = getDayName(d);
+                    headHtml += `<th${isToday ? ' style="color:var(--primary);"' : ''}>${label}</th>`;
+                }
+                headHtml += '</tr>';
+                weeklyHead.innerHTML = headHtml;
+
+                if (ids.length === 0) {
+                    weeklyBody.innerHTML =
+                        `<tr><td colspan="8" style="text-align:center;color:var(--text-dim);padding:16px 0;">Add habits to see weekly view</td></tr>`;
+                    return;
+                }
+
+                let bodyHtml = '';
+                for (const id of ids) {
+                    const h = STATE.habits[id];
+                    const comps = h.completions || {};
+                    const nameEsc = h.name.replace(/[&<>"]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' } [
+                        m
+                    ]));
+                    bodyHtml += `<tr><td class="habit-label" title="${nameEsc}">${nameEsc}</td>`;
+                    for (const d of days) {
+                        const isToday = d === today;
+                        const done = !!comps[d];
+                        let cls = 'cell-empty';
+                        if (done) cls = 'cell-done';
+                        else if (isToday) cls = 'cell-miss';
+                        const tdClass = isToday ? 'cell-today' : '';
+                        bodyHtml += `<td class="${tdClass}"><span class="${cls}"></span></td>`;
+                    }
+                    bodyHtml += '</tr>';
+                }
+                weeklyBody.innerHTML = bodyHtml;
+
+                // update today badge
+                todayBadge.textContent = getShortDate(today);
+            }
+
+            // ─── Persistence ───
+            function saveState() {
+                try {
+                    const data = {
+                        timer: {
+                            workMinutes: STATE.timer.workMinutes,
+                            breakMinutes: STATE.timer.breakMinutes,
+                            remaining: STATE.timer.remaining,
+                            isRunning: STATE.timer.isRunning,
+                            isPaused: STATE.timer.isPaused,
+                            isWork: STATE.timer.isWork,
+                            finished: STATE.timer.finished,
+                        },
+                        habits: STATE.habits,
+                    };
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+                } catch (_) { /* ignore */ }
+            }
+
+            function loadState() {
+                try {
+                    const raw = localStorage.getItem(STORAGE_KEY);
+                    if (!raw) return false;
+                    const data = JSON.parse(raw);
+                    if (data.timer) {
+                        const t = STATE.timer;
+                        t.workMinutes = data.timer.workMinutes ?? 25;
+                        t.breakMinutes = data.timer.breakMinutes ?? 5;
+                        t.remaining = data.timer.remaining ?? t.workMinutes * 60;
+                        t.isRunning = data.timer.isRunning ?? false;
+                        t.isPaused = data.timer.isPaused ?? false;
+                        t.isWork = data.timer.isWork ?? true;
+                        t.finished = data.timer.finished ?? false;
+                        if (t.isRunning && !t.isPaused && !t.finished) {
+                            // restart interval
+                            if (t.intervalId) clearInterval(t.intervalId);
+                            t.intervalId = setInterval(timerTick, 1000);
+                        }
+                        workInput.value = t.workMinutes;
+                        breakInput.value = t.breakMinutes;
+                        // ensure remaining is valid
+                        const total = t.isWork ? t.workMinutes * 60 : t.breakMinutes * 60;
+                        if (t.remaining > total) t.remaining = total;
+                        if (t.remaining < 0) t.remaining = 0;
+                    }
+                    if (data.habits) {
+                        STATE.habits = data.habits;
+                    }
+                    return true;
+                } catch (_) { return false; }
+            }
+
+            // ─── Export / Import ───
+            function exportData() {
+                const data = {
+                    version: '1.0',
+                    exportedAt: new Date().toISOString(),
+                    timer: {
+                        workMinutes: STATE.timer.workMinutes,
+                        breakMinutes: STATE.timer.breakMinutes,
+                        isWork: STATE.timer.isWork,
+                    },
+                    habits: STATE.habits,
+                };
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `focus_habits_${getToday()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                showToast('✅ Exported successfully!');
+            }
+
+            function importData(file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if (!data.habits || typeof data.habits !== 'object') {
+                            showToast('❌ Invalid data: missing habits', 3000);
+                            return;
+                        }
+                        // confirm
+                        if (!confirm(`Import ${Object.keys(data.habits).length} habits? This will replace ALL current data.`))
+                            return;
+                        // stop timer
+                        if (STATE.timer.intervalId) {
+                            clearInterval(STATE.timer.intervalId);
+                            STATE.timer.intervalId = null;
+                        }
+                        STATE.timer.isRunning = false;
+                        STATE.timer.isPaused = false;
+                        STATE.timer.finished = false;
+                        STATE.habits = data.habits;
+                        if (data.timer) {
+                            STATE.timer.workMinutes = data.timer.workMinutes ?? 25;
+                            STATE.timer.breakMinutes = data.timer.breakMinutes ?? 5;
+                            STATE.timer.isWork = data.timer.isWork ?? true;
+                            workInput.value = STATE.timer.workMinutes;
+                            breakInput.value = STATE.timer.breakMinutes;
+                        }
+                        const total = STATE.timer.isWork ? STATE.timer.workMinutes * 60 : STATE.timer.breakMinutes * 60;
+                        STATE.timer.remaining = total;
+                        STATE.timer.finished = false;
+                        updateTimerUI();
+                        saveState();
+                        renderHabits();
+                        showToast(`✅ Imported ${Object.keys(data.habits).length} habits`, 3000);
+                    } catch (err) {
+                        showToast('❌ Import failed: invalid JSON', 3000);
+                    }
+                };
+                reader.readAsText(file);
+            }
+
+            function clearAllData() {
+                if (!confirm('Delete ALL data (habits and timer settings)? This cannot be undone.')) return;
+                if (STATE.timer.intervalId) {
+                    clearInterval(STATE.timer.intervalId);
+                    STATE.timer.intervalId = null;
+                }
+                STATE.timer.isRunning = false;
+                STATE.timer.isPaused = false;
+                STATE.timer.finished = false;
+                STATE.timer.workMinutes = 25;
+                STATE.timer.breakMinutes = 5;
+                STATE.timer.isWork = true;
+                STATE.timer.remaining = 25 * 60;
+                workInput.value = 25;
+                breakInput.value = 5;
+                STATE.habits = {};
+                updateTimerUI();
+                saveState();
+                renderHabits();
+                showToast('🗑 All data cleared', 2000);
+            }
+
+            // ─── Modal ───
+            let modalResolve = null;
+
+            function openEditModal(id) {
+                const h = STATE.habits[id];
+                if (!h) return;
+                STATE.editingId = id;
+                editModalTitle.textContent = 'Edit Habit';
+                editInput.value = h.name;
+                editModal.classList.add('active');
+                editInput.focus();
+                editInput.select();
+                return new Promise((resolve) => {
+                    modalResolve = resolve;
+                });
+            }
+
+            function closeEditModal() {
+                editModal.classList.remove('active');
+                STATE.editingId = null;
+                if (modalResolve) {
+                    modalResolve(null);
+                    modalResolve = null;
+                }
+            }
+
+            function confirmEdit() {
+                const val = editInput.value.trim();
+                if (!val) {
+                    showToast('Please enter a name', 1500);
+                    return;
+                }
+                if (STATE.editingId) {
+                    editHabit(STATE.editingId, val);
+                }
+                closeEditModal();
+            }
+
+            // ─── Event Binding ───
+            function bindEvents() {
+                // Timer
+                startBtn.addEventListener('click', startTimer);
+                pauseBtn.addEventListener('click', pauseTimer);
+                resetBtn.addEventListener('click', resetTimer);
+
+                workInput.addEventListener('change', () => {
+                    const v = parseInt(workInput.value, 10) || 25;
+                    workInput.value = clamp(v, 1, 120);
+                    if (!STATE.timer.isRunning && !STATE.timer.isPaused && !STATE.timer.finished) {
+                        STATE.timer.workMinutes = parseInt(workInput.value, 10);
+                        STATE.timer.remaining = STATE.timer.isWork ? STATE.timer.workMinutes * 60 : STATE.timer.breakMinutes *
+                            60;
+                        updateTimerUI();
+                        saveState();
+                    }
+                });
+                breakInput.addEventListener('change', () => {
+                    const v = parseInt(breakInput.value, 10) || 5;
+                    breakInput.value = clamp(v, 1, 60);
+                    if (!STATE.timer.isRunning && !STATE.timer.isPaused && !STATE.timer.finished) {
+                        STATE.timer.breakMinutes = parseInt(breakInput.value, 10);
+                        STATE.timer.remaining = STATE.timer.isWork ? STATE.timer.workMinutes * 60 : STATE.timer.breakMinutes *
+                            60;
+                        updateTimerUI();
+                        saveState();
+                    }
+                });
+
+                // Habits - delegated
+                habitList.addEventListener('click', (e) => {
+                    const el = e.target.closest('[data-action]');
+                    if (!el) return;
+                    const action = el.dataset.action;
+                    const id = el.dataset.id;
+                    if (!id) return;
+                    if (action === 'toggle') {
+                        toggleHabitToday(id);
+                    } else if (action === 'delete') {
+                        if (confirm(`Delete "${STATE.habits[id]?.name || 'habit'}"?`)) {
+                            deleteHabit(id);
+                        }
+                    } else if (action === 'edit') {
+                        openEditModal(id);
+                    }
+                });
+
+                habitAddBtn.addEventListener('click', () => {
+                    const name = habitInput.value.trim();
+                    if (addHabit(name)) {
+                        habitInput.value = '';
+                        habitInput.focus();
+                    } else {
+                        showToast('Please enter a habit name', 1500);
+                    }
+                });
+                habitInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        habitAddBtn.click();
+                    }
+                });
+
+                // Modal
+                editCancelBtn.addEventListener('click', closeEditModal);
+                editSaveBtn.addEventListener('click', confirmEdit);
+                editInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') confirmEdit();
+                    if (e.key === 'Escape') closeEditModal();
+                });
+                editModal.addEventListener('click', (e) => {
+                    if (e.target === editModal) closeEditModal();
+                });
+
+                // Export / Import
+                exportBtn.addEventListener('click', exportData);
+                importBtn.addEventListener('click', () => importFile.click());
+                importFile.addEventListener('change', (e) => {
+                    if (e.target.files.length) {
+                        importData(e.target.files[0]);
+                        e.target.value = '';
+                    }
+                });
+                clearAllBtn.addEventListener('click', clearAllData);
+
+                // Keyboard shortcut for timer start/pause
+                document.addEventListener('keydown', (e) => {
+                    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+                    if (e.key === ' ' || e.key === 'Space') {
+                        e.preventDefault();
+                        if (STATE.timer.isRunning && !STATE.timer.isPaused) {
+                            pauseTimer();
+                        } else {
+                            startTimer();
+                        }
+                    }
+                    if (e.key === 'r' || e.key === 'R') {
+                        resetTimer();
+                    }
+                });
+            }
+
+            // ─── Init ───
+            function init() {
+                // request notification permission early
+                if ('Notification' in window && Notification.permission === 'default') {
+                    Notification.requestPermission().catch(() => {});
+                }
+
+                const loaded = loadState();
+                // ensure timer state is consistent
+                const t = STATE.timer;
+                if (!loaded) {
+                    t.remaining = t.workMinutes * 60;
+                } else {
+                    const total = t.isWork ? t.workMinutes * 60 : t.breakMinutes * 60;
+                    if (t.remaining > total) t.remaining = total;
+                    if (t.remaining < 0) t.remaining = 0;
+                    if (t.finished) {
+                        t.isRunning = false;
+                        t.isPaused = false;
+                    }
+                    // if running but no interval, restart
+                    if (t.isRunning && !t.isPaused && !t.finished && !t.intervalId) {
+                        t.intervalId = setInterval(timerTick, 1000);
+                    }
+                }
+                updateTimerUI();
+                renderHabits();
+                bindEvents();
+
+                // periodic save
+                setInterval(saveState, 30000);
+
+                // update grid daily
+                const now = new Date();
+                const msToMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0) - now;
+                setTimeout(() => {
+                    renderWeeklyGrid();
+                    // then every 24h
+                    setInterval(renderWeeklyGrid, 86400000);
+                }, msToMidnight + 5000);
+
+                showToast('✨ Ready! Press Space to start/pause timer.', 2500);
+
+                // handle page visibility to keep timer accurate
+                document.addEventListener('visibilitychange', () => {
+                    if (document.hidden) {
+                        // save state when hidden
+                        saveState();
+                    } else {
+                        // when returning, ensure timer UI is correct
+                        updateTimerUI();
+                        // if timer should be running but interval is missing, restart
+                        const t = STATE.timer;
+                        if (t.isRunning && !t.isPaused && !t.finished && !t.intervalId) {
+                            t.intervalId = setInterval(timerTick, 1000);
+                        }
+                    }
+                });
+            }
+
+            // ─── Start ───
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+
+        })();
+    </script>
+
+</body>
+</html>

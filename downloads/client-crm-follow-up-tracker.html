@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Client CRM · Follow-Up Tracker</title>
+    <style>
+        /* ----- reset & base ----- */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: #0d0d1a;
+            color: #e8e8f0;
+            padding: 1.5rem;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        #app {
+            max-width: 1400px;
+            width: 100%;
+            background: #14142a;
+            border-radius: 1.5rem;
+            padding: 2rem 2rem 2.5rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+            border: 1px solid #2a2a4a;
+        }
+
+        /* ----- scrollbar ----- */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1a1a32;
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3d3d6b;
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5a5a8a;
+        }
+
+        /* ----- typography ----- */
+        h1 {
+            font-size: 1.7rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        h1 span {
+            background: linear-gradient(135deg, #7c7cf8, #4a6cf7);
+            font-size: 0.8rem;
+            font-weight: 500;
+            padding: 0.15rem 0.7rem;
+            border-radius: 40px;
+            color: #fff;
+            letter-spacing: 0.3px;
+        }
+        h2 {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #b0b0d0;
+            margin-bottom: 0.25rem;
+        }
+
+        /* ----- header / toolbar ----- */
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #26264a;
+        }
+        .toolbar-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1.1rem;
+            border-radius: 40px;
+            border: none;
+            font-weight: 500;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+            background: #26264a;
+            color: #d0d0f0;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        .btn:hover {
+            background: #35356a;
+            box-shadow: 0 4px 14px rgba(74, 108, 247, 0.2);
+        }
+        .btn:active {
+            transform: scale(0.97);
+        }
+        .btn-primary {
+            background: #4a6cf7;
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: #5f7cf8;
+            box-shadow: 0 4px 20px rgba(74, 108, 247, 0.35);
+        }
+        .btn-success {
+            background: #2d8f5e;
+            color: #fff;
+        }
+        .btn-success:hover {
+            background: #36a86f;
+        }
+        .btn-danger {
+            background: #b13e4b;
+            color: #fff;
+        }
+        .btn-danger:hover {
+            background: #cf4a5a;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #3d3d6b;
+            color: #b0b0d0;
+        }
+        .btn-outline:hover {
+            background: #1f1f42;
+            border-color: #5a5a8a;
+        }
+        .btn-sm {
+            padding: 0.3rem 0.8rem;
+            font-size: 0.75rem;
+        }
+        .btn-icon {
+            padding: 0.4rem 0.7rem;
+            font-size: 0.9rem;
+            line-height: 1;
+        }
+
+        /* ----- form ----- */
+        .form-card {
+            background: #18183a;
+            border-radius: 1.2rem;
+            padding: 1.5rem 1.8rem;
+            margin-bottom: 2rem;
+            border: 1px solid #26264a;
+            transition: border-color 0.25s;
+        }
+        .form-card:focus-within {
+            border-color: #4a6cf7;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 1rem 1.2rem;
+            align-items: end;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+        .form-group label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: #8a8ab8;
+        }
+        .form-group input,
+        .form-group select {
+            background: #0f0f26;
+            border: 1px solid #2a2a52;
+            border-radius: 10px;
+            padding: 0.6rem 0.9rem;
+            color: #e8e8f0;
+            font-size: 0.9rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            width: 100%;
+            font-family: inherit;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #4a6cf7;
+            box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.2);
+        }
+        .form-group input::placeholder {
+            color: #5a5a7a;
+        }
+        .form-group select option {
+            background: #0f0f26;
+            color: #e8e8f0;
+        }
+        .form-actions {
+            display: flex;
+            gap: 0.7rem;
+            align-items: center;
+            margin-top: 0.4rem;
+            flex-wrap: wrap;
+        }
+        .form-actions .btn {
+            padding: 0.6rem 1.6rem;
+        }
+        .form-actions .btn-secondary {
+            background: #26264a;
+            color: #b0b0d0;
+        }
+        .form-actions .btn-secondary:hover {
+            background: #35356a;
+        }
+        .form-edit-badge {
+            font-size: 0.75rem;
+            color: #7c7cf8;
+            background: #1a1a42;
+            padding: 0.2rem 0.8rem;
+            border-radius: 40px;
+            display: inline-block;
+        }
+
+        /* ----- table wrapper ----- */
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: 1rem;
+            border: 1px solid #22224a;
+            background: #12122a;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            min-width: 700px;
+        }
+        thead {
+            background: #1a1a3a;
+            border-bottom: 2px solid #2a2a52;
+        }
+        th {
+            text-align: left;
+            padding: 0.9rem 1rem;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #8a8ab8;
+            white-space: nowrap;
+            cursor: default;
+            user-select: none;
+        }
+        th.sortable {
+            cursor: pointer;
+            transition: color 0.15s;
+        }
+        th.sortable:hover {
+            color: #c0c0f0;
+        }
+        th .sort-icon {
+            display: inline-block;
+            margin-left: 4px;
+            font-size: 0.7rem;
+            opacity: 0.5;
+        }
+        th.sorted .sort-icon {
+            opacity: 1;
+            color: #7c7cf8;
+        }
+        td {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid #1e1e42;
+            vertical-align: middle;
+            color: #d8d8ec;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        tr:hover td {
+            background: #1a1a3a;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 0.15rem 0.7rem;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            background: #26264a;
+            color: #b0b0d0;
+            text-transform: capitalize;
+            letter-spacing: 0.2px;
+        }
+        .status-badge.active {
+            background: #1d5a3a;
+            color: #7fdfb0;
+        }
+        .status-badge.hold {
+            background: #5a4a1a;
+            color: #e8c86a;
+        }
+        .status-badge.completed {
+            background: #1a3a5a;
+            color: #7fc0f0;
+        }
+        .status-badge.proposal {
+            background: #4a2a6a;
+            color: #c99cf8;
+        }
+        .status-badge.lead {
+            background: #3a3a5a;
+            color: #b0b0e0;
+        }
+        .status-badge.archived {
+            background: #2a1a1a;
+            color: #b08080;
+        }
+        .status-badge.negotiation {
+            background: #3a4a2a;
+            color: #b0d080;
+        }
+
+        .row-overdue {
+            background: #2a0e0e !important;
+            border-left: 3px solid #e05454;
+        }
+        .row-overdue td {
+            color: #f0c0c0;
+        }
+        .row-overdue:hover td {
+            background: #3a1212 !important;
+        }
+        .overdue-label {
+            color: #ff6b6b;
+            font-weight: 600;
+            font-size: 0.7rem;
+            background: #3a1818;
+            padding: 0.1rem 0.5rem;
+            border-radius: 30px;
+            display: inline-block;
+            margin-left: 0.4rem;
+        }
+
+        .cell-actions {
+            display: flex;
+            gap: 0.3rem;
+            flex-wrap: wrap;
+        }
+        .cell-actions .btn {
+            padding: 0.2rem 0.6rem;
+            font-size: 0.7rem;
+            border-radius: 30px;
+        }
+        .btn-edit {
+            background: #2a3a6a;
+            color: #b0c8f8;
+        }
+        .btn-edit:hover {
+            background: #3a4a8a;
+        }
+        .btn-delete {
+            background: #5a2a2a;
+            color: #f0a0a0;
+        }
+        .btn-delete:hover {
+            background: #7a3a3a;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1.5rem;
+            color: #6a6a9a;
+        }
+        .empty-state p {
+            font-size: 1rem;
+        }
+        .empty-state .emoji {
+            font-size: 2.8rem;
+            display: block;
+            margin-bottom: 0.6rem;
+        }
+
+        /* ----- import hidden ----- */
+        #importInput {
+            display: none;
+        }
+
+        /* ----- responsive ----- */
+        @media (max-width: 800px) {
+            #app {
+                padding: 1rem;
+            }
+            .form-row {
+                grid-template-columns: 1fr 1fr;
+            }
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.8rem;
+            }
+            .toolbar-actions {
+                justify-content: stretch;
+            }
+            .toolbar-actions .btn {
+                flex: 1;
+                justify-content: center;
+            }
+            h1 {
+                font-size: 1.3rem;
+            }
+        }
+        @media (max-width: 500px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            .form-card {
+                padding: 1rem;
+            }
+            table {
+                font-size: 0.8rem;
+                min-width: 500px;
+            }
+            th,
+            td {
+                padding: 0.5rem 0.6rem;
+            }
+        }
+
+        /* ----- toast ----- */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1a3a;
+            border: 1px solid #3d3d6b;
+            padding: 0.7rem 1.8rem;
+            border-radius: 60px;
+            color: #e0e0f0;
+            font-size: 0.9rem;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            z-index: 999;
+            backdrop-filter: blur(10px);
+        }
+        .toast.show {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateX(-50%) translateY(0);
+        }
+        .toast-success {
+            border-color: #2d8f5e;
+        }
+        .toast-error {
+            border-color: #b13e4b;
+        }
+        .toast-info {
+            border-color: #4a6cf7;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app">
+        <!-- header -->
+        <div class="toolbar">
+            <h1>
+                📋 Client CRM
+                <span>follow-up</span>
+            </h1>
+            <div class="toolbar-actions">
+                <button class="btn btn-outline btn-sm" id="exportBtn" title="Export all clients as JSON">⬇ Export JSON</button>
+                <button class="btn btn-outline btn-sm" id="importBtn" title="Import clients from JSON file">⬆ Import JSON</button>
+                <input type="file" id="importInput" accept=".json,application/json" />
+                <button class="btn btn-danger btn-sm" id="clearAllBtn" title="Remove all clients">🗑 Clear all</button>
+            </div>
+        </div>
+
+        <!-- form -->
+        <div class="form-card" id="formCard">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:0.75rem;">
+                <h2 id="formTitle">➕ Add Client</h2>
+                <span id="editBadge" class="form-edit-badge" style="display:none;">✎ editing</span>
+            </div>
+            <form id="clientForm" autocomplete="off">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fName">Name *</label>
+                        <input type="text" id="fName" placeholder="e.g. Jane Doe" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="fContact">Contact</label>
+                        <input type="text" id="fContact" placeholder="email or phone" />
+                    </div>
+                    <div class="form-group">
+                        <label for="fProject">Project</label>
+                        <input type="text" id="fProject" placeholder="e.g. Website Redesign" />
+                    </div>
+                    <div class="form-group">
+                        <label for="fStatus">Status</label>
+                        <select id="fStatus">
+                            <option value="Active">Active</option>
+                            <option value="On Hold">On Hold</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Proposal Sent">Proposal Sent</option>
+                            <option value="Lead">Lead</option>
+                            <option value="Negotiation">Negotiation</option>
+                            <option value="Archived">Archived</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="fLastContact">Last Contact</label>
+                        <input type="date" id="fLastContact" />
+                    </div>
+                    <div class="form-group">
+                        <label for="fNextFollowUp">Next Follow-Up *</label>
+                        <input type="date" id="fNextFollowUp" required />
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" id="submitBtn">➕ Add Client</button>
+                    <button type="button" class="btn btn-secondary" id="cancelBtn" style="display:none;">✖ Cancel</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- table -->
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Contact</th>
+                        <th>Project</th>
+                        <th>Status</th>
+                        <th>Last Contact</th>
+                        <th class="sortable" data-sort="nextFollowUp" id="sortHeader">
+                            Next Follow-Up
+                            <span class="sort-icon" id="sortIcon">⇅</span>
+                        </th>
+                        <th style="text-align:center;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="clientTableBody">
+                    <!-- rows rendered by JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- empty state (hidden by default) -->
+        <div id="emptyState" class="empty-state" style="display:none;">
+            <span class="emoji">📭</span>
+            <p>No clients yet. Add your first client above!</p>
+        </div>
+
+        <!-- footer stats -->
+        <div style="margin-top:1.2rem;font-size:0.8rem;color:#5a5a8a;display:flex;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+            <span id="clientCount">0 clients</span>
+            <span id="overdueCount">0 overdue</span>
+        </div>
+    </div>
+
+    <!-- toast -->
+    <div id="toast" class="toast"></div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ----- state -----
+            let clients = [];
+            let editingId = null;
+            let sortAsc = true; // for nextFollowUp sort
+
+            // ----- DOM refs -----
+            const form = document.getElementById('clientForm');
+            const fName = document.getElementById('fName');
+            const fContact = document.getElementById('fContact');
+            const fProject = document.getElementById('fProject');
+            const fStatus = document.getElementById('fStatus');
+            const fLastContact = document.getElementById('fLastContact');
+            const fNextFollowUp = document.getElementById('fNextFollowUp');
+            const submitBtn = document.getElementById('submitBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const formTitle = document.getElementById('formTitle');
+            const editBadge = document.getElementById('editBadge');
+            const tbody = document.getElementById('clientTableBody');
+            const emptyState = document.getElementById('emptyState');
+            const clientCount = document.getElementById('clientCount');
+            const overdueCount = document.getElementById('overdueCount');
+            const sortHeader = document.getElementById('sortHeader');
+            const sortIcon = document.getElementById('sortIcon');
+            const exportBtn = document.getElementById('exportBtn');
+            const importBtn = document.getElementById('importBtn');
+            const importInput = document.getElementById('importInput');
+            const clearAllBtn = document.getElementById('clearAllBtn');
+            const toastEl = document.getElementById('toast');
+
+            // ----- helpers -----
+            function formatDate(dateStr) {
+                if (!dateStr) return '—';
+                const d = new Date(dateStr + 'T00:00:00');
+                if (isNaN(d)) return dateStr;
+                return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            }
+
+            function todayStr() {
+                const d = new Date();
+                return d.getFullYear() + '-' +
+                    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+                    String(d.getDate()).padStart(2, '0');
+            }
+
+            function isOverdue(dateStr) {
+                if (!dateStr) return false;
+                const today = todayStr();
+                return dateStr < today;
+            }
+
+            function generateId() {
+                return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+            }
+
+            function getStatusClass(status) {
+                const map = {
+                    'Active': 'active',
+                    'On Hold': 'hold',
+                    'Completed': 'completed',
+                    'Proposal Sent': 'proposal',
+                    'Lead': 'lead',
+                    'Archived': 'archived',
+                    'Negotiation': 'negotiation'
+                };
+                return map[status] || '';
+            }
+
+            // ----- toast -----
+            let toastTimer = null;
+
+            function showToast(msg, type = 'info') {
+                toastEl.textContent = msg;
+                toastEl.className = 'toast';
+                if (type === 'success') toastEl.classList.add('toast-success');
+                else if (type === 'error') toastEl.classList.add('toast-error');
+                else toastEl.classList.add('toast-info');
+                toastEl.classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => {
+                    toastEl.classList.remove('show');
+                }, 2800);
+            }
+
+            // ----- storage -----
+            function saveToStorage() {
+                try {
+                    localStorage.setItem('crm_clients', JSON.stringify(clients));
+                } catch (_) { /* ignore */ }
+            }
+
+            function loadFromStorage() {
+                try {
+                    const raw = localStorage.getItem('crm_clients');
+                    if (raw) {
+                        const parsed = JSON.parse(raw);
+                        if (Array.isArray(parsed)) {
+                            clients = parsed;
+                            return;
+                        }
+                    }
+                } catch (_) { /* ignore */ }
+                clients = [];
+            }
+
+            // ----- render -----
+            function render() {
+                // sort clients by nextFollowUp (ascending = soonest first)
+                const sorted = [...clients].sort((a, b) => {
+                    const da = a.nextFollowUp || '9999-99-99';
+                    const db = b.nextFollowUp || '9999-99-99';
+                    if (da < db) return sortAsc ? -1 : 1;
+                    if (da > db) return sortAsc ? 1 : -1;
+                    return 0;
+                });
+
+                if (clients.length === 0) {
+                    tbody.innerHTML = '';
+                    emptyState.style.display = 'block';
+                    clientCount.textContent = '0 clients';
+                    overdueCount.textContent = '0 overdue';
+                    return;
+                }
+                emptyState.style.display = 'none';
+
+                let html = '';
+                let overdueTotal = 0;
+                const today = todayStr();
+
+                for (const c of sorted) {
+                    const overdue = isOverdue(c.nextFollowUp);
+                    if (overdue) overdueTotal++;
+                    const statusCls = getStatusClass(c.status);
+
+                    html += `<tr class="${overdue ? 'row-overdue' : ''}">`;
+                    html += `<td><strong>${escapeHtml(c.name || '—')}</strong></td>`;
+                    html += `<td>${escapeHtml(c.contact || '—')}</td>`;
+                    html += `<td>${escapeHtml(c.project || '—')}</td>`;
+                    html += `<td><span class="status-badge ${statusCls}">${escapeHtml(c.status || 'Active')}</span></td>`;
+                    html += `<td>${formatDate(c.lastContact)}</td>`;
+                    html += `<td>${formatDate(c.nextFollowUp)}${overdue ? ' <span class="overdue-label">⏰ overdue</span>' : ''}</td>`;
+                    html += `<td style="text-align:center;">
+                                <div class="cell-actions" style="justify-content:center;">
+                                    <button class="btn btn-edit btn-sm" data-id="${c.id}">✎</button>
+                                    <button class="btn btn-delete btn-sm" data-id="${c.id}">✕</button>
+                                </div>
+                             </td>`;
+                    html += `</tr>`;
+                }
+
+                tbody.innerHTML = html;
+                clientCount.textContent = `${clients.length} client${clients.length !== 1 ? 's' : ''}`;
+                overdueCount.textContent = `${overdueTotal} overdue`;
+
+                // attach event listeners to edit/delete buttons
+                tbody.querySelectorAll('.btn-edit').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = btn.dataset.id;
+                        startEdit(id);
+                    });
+                });
+                tbody.querySelectorAll('.btn-delete').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = btn.dataset.id;
+                        deleteClient(id);
+                    });
+                });
+            }
+
+            function escapeHtml(str) {
+                if (!str) return '';
+                const div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            }
+
+            // ----- CRUD -----
+            function addClient(data) {
+                const client = {
+                    id: generateId(),
+                    name: data.name.trim(),
+                    contact: data.contact.trim(),
+                    project: data.project.trim(),
+                    status: data.status,
+                    lastContact: data.lastContact || '',
+                    nextFollowUp: data.nextFollowUp || '',
+                };
+                clients.push(client);
+                saveToStorage();
+                render();
+                showToast(`Client "${client.name}" added.`, 'success');
+            }
+
+            function updateClient(id, data) {
+                const idx = clients.findIndex(c => c.id === id);
+                if (idx === -1) return;
+                const c = clients[idx];
+                c.name = data.name.trim();
+                c.contact = data.contact.trim();
+                c.project = data.project.trim();
+                c.status = data.status;
+                c.lastContact = data.lastContact || '';
+                c.nextFollowUp = data.nextFollowUp || '';
+                saveToStorage();
+                render();
+                showToast(`Client "${c.name}" updated.`, 'success');
+            }
+
+            function deleteClient(id) {
+                const c = clients.find(c => c.id === id);
+                if (!c) return;
+                if (!confirm(`Delete client "${c.name}"?`)) return;
+                clients = clients.filter(c => c.id !== id);
+                if (editingId === id) cancelEdit();
+                saveToStorage();
+                render();
+                showToast(`Client "${c.name}" removed.`, 'info');
+            }
+
+            function clearAllClients() {
+                if (clients.length === 0) {
+                    showToast('No clients to clear.', 'info');
+                    return;
+                }
+                if (!confirm('Delete ALL clients? This cannot be undone.')) return;
+                clients = [];
+                if (editingId) cancelEdit();
+                saveToStorage();
+                render();
+                showToast('All clients cleared.', 'info');
+            }
+
+            // ----- form handling -----
+            function resetForm() {
+                form.reset();
+                fName.value = '';
+                fContact.value = '';
+                fProject.value = '';
+                fStatus.value = 'Active';
+                fLastContact.value = '';
+                const today = todayStr();
+                fNextFollowUp.value = '';
+                editingId = null;
+                submitBtn.textContent = '➕ Add Client';
+                formTitle.textContent = '➕ Add Client';
+                editBadge.style.display = 'none';
+                cancelBtn.style.display = 'none';
+                // set default last contact to today
+                fLastContact.value = today;
+                // default next follow-up = 7 days from today
+                const future = new Date();
+                future.setDate(future.getDate() + 7);
+                fNextFollowUp.value = future.getFullYear() + '-' +
+                    String(future.getMonth() + 1).padStart(2, '0') + '-' +
+                    String(future.getDate()).padStart(2, '0');
+            }
+
+            function startEdit(id) {
+                const c = clients.find(c => c.id === id);
+                if (!c) return;
+                editingId = id;
+                fName.value = c.name || '';
+                fContact.value = c.contact || '';
+                fProject.value = c.project || '';
+                fStatus.value = c.status || 'Active';
+                fLastContact.value = c.lastContact || '';
+                fNextFollowUp.value = c.nextFollowUp || '';
+                submitBtn.textContent = '💾 Update Client';
+                formTitle.textContent = '✎ Edit Client';
+                editBadge.style.display = 'inline-block';
+                cancelBtn.style.display = 'inline-flex';
+                // scroll to form
+                document.getElementById('formCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                fName.focus();
+            }
+
+            function cancelEdit() {
+                resetForm();
+                render();
+            }
+
+            function getFormData() {
+                return {
+                    name: fName.value,
+                    contact: fContact.value,
+                    project: fProject.value,
+                    status: fStatus.value,
+                    lastContact: fLastContact.value,
+                    nextFollowUp: fNextFollowUp.value,
+                };
+            }
+
+            function validateForm(data) {
+                if (!data.name || data.name.trim() === '') {
+                    showToast('Name is required.', 'error');
+                    fName.focus();
+                    return false;
+                }
+                if (!data.nextFollowUp) {
+                    showToast('Next Follow-Up date is required.', 'error');
+                    fNextFollowUp.focus();
+                    return false;
+                }
+                return true;
+            }
+
+            // ----- form submit -----
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const data = getFormData();
+                if (!validateForm(data)) return;
+
+                if (editingId) {
+                    updateClient(editingId, data);
+                    cancelEdit();
+                } else {
+                    addClient(data);
+                    resetForm();
+                    // after add, keep default dates
+                    const today = todayStr();
+                    fLastContact.value = today;
+                    const future = new Date();
+                    future.setDate(future.getDate() + 7);
+                    fNextFollowUp.value = future.getFullYear() + '-' +
+                        String(future.getMonth() + 1).padStart(2, '0') + '-' +
+                        String(future.getDate()).padStart(2, '0');
+                }
+            });
+
+            cancelBtn.addEventListener('click', cancelEdit);
+
+            // ----- sort -----
+            sortHeader.addEventListener('click', () => {
+                sortAsc = !sortAsc;
+                sortIcon.textContent = sortAsc ? '⇅' : '⇵';
+                render();
+            });
+
+            // ----- export / import -----
+            function exportJSON() {
+                if (clients.length === 0) {
+                    showToast('No clients to export.', 'info');
+                    return;
+                }
+                const data = JSON.stringify(clients, null, 2);
+                const blob = new Blob([data], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const dateStr = new Date().toISOString().slice(0, 10);
+                a.download = `crm_clients_${dateStr}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast(`Exported ${clients.length} clients.`, 'success');
+            }
+
+            function importJSON(file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const parsed = JSON.parse(e.target.result);
+                        if (!Array.isArray(parsed)) {
+                            showToast('Invalid JSON: expected an array.', 'error');
+                            return;
+                        }
+                        if (parsed.length === 0) {
+                            showToast('No clients in file.', 'info');
+                            return;
+                        }
+                        // validate each entry has at least a name
+                        const valid = parsed.every(c => c.name && typeof c.name === 'string');
+                        if (!valid) {
+                            showToast('Invalid client data: each entry must have a "name".', 'error');
+                            return;
+                        }
+                        // merge: add clients that don't conflict by name? simpler: append all with new ids
+                        const count = parsed.length;
+                        for (const c of parsed) {
+                            // generate new id to avoid collisions
+                            const newClient = {
+                                id: generateId(),
+                                name: (c.name || '').trim(),
+                                contact: (c.contact || '').trim(),
+                                project: (c.project || '').trim(),
+                                status: c.status || 'Active',
+                                lastContact: c.lastContact || '',
+                                nextFollowUp: c.nextFollowUp || '',
+                            };
+                            clients.push(newClient);
+                        }
+                        saveToStorage();
+                        render();
+                        showToast(`Imported ${count} client${count !== 1 ? 's' : ''}.`, 'success');
+                    } catch (err) {
+                        showToast('Failed to parse JSON file.', 'error');
+                        console.error(err);
+                    }
+                };
+                reader.readAsText(file);
+                importInput.value = ''; // reset
+            }
+
+            exportBtn.addEventListener('click', exportJSON);
+
+            importBtn.addEventListener('click', () => {
+                importInput.click();
+            });
+
+            importInput.addEventListener('change', (e) => {
+                if (importInput.files && importInput.files.length > 0) {
+                    importJSON(importInput.files[0]);
+                }
+            });
+
+            clearAllBtn.addEventListener('click', clearAllClients);
+
+            // ----- init -----
+            function init() {
+                loadFromStorage();
+                // set default dates
+                const today = todayStr();
+                fLastContact.value = today;
+                const future = new Date();
+                future.setDate(future.getDate() + 7);
+                fNextFollowUp.value = future.getFullYear() + '-' +
+                    String(future.getMonth() + 1).padStart(2, '0') + '-' +
+                    String(future.getDate()).padStart(2, '0');
+                render();
+                // if no clients, show a welcome toast
+                if (clients.length === 0) {
+                    setTimeout(() => {
+                        showToast('👋 Add your first client to get started.', 'info');
+                    }, 400);
+                }
+            }
+
+            // ensure date inputs work with dark theme
+            init();
+
+            // ----- keyboard shortcut: Escape to cancel edit -----
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && editingId) {
+                    cancelEdit();
+                    showToast('Edit cancelled.', 'info');
+                }
+            });
+
+        })();
+    </script>
+
+</body>
+</html>
